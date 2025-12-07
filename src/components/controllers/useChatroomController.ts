@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Room, User, Message, ViewState } from '../models/types';
-import { connectWebSocket, queryRoomMembers, createRoom, joinRoom, leaveRoom, sendMessage, setMessageHandler, removeMessageHandler } from '../../api/awsLambda';
+import { connectWebSocket, queryRoomMembers, createRoom, joinRoom, leaveRoom, sendMessage, setMessageHandler, removeMessageHandler } from '../../api/awsWebsocket';
 
 export const useChatroomController = () => {
   const [currentView, setCurrentView] = useState<ViewState>('welcome');

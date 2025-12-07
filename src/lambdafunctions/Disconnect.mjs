@@ -12,6 +12,8 @@ const ROOM_TABLE = "Room";
 
 export const handler = async (event) => {
   const connectionId = event.requestContext.connectionId;
+  const domain = event.requestContext.domainName;
+  const stage = event.requestContext.stage;
 
   try {
     // Query all rooms owned by disconnecting users
@@ -34,28 +36,28 @@ export const handler = async (event) => {
         FunctionName: LEAVE_ROOM_LAMBDA,
         InvocationType: "RequestResponse",
         Payload: Buffer.from(JSON.stringify({
-          requestContext: { connectionId },
-          queryStringParameters: { chatroomId }
+          requestContext: { connectionId, domain, stage },
+          body: JSON.stringify({ chatroomId })
         }))
       }))
     );
 
     const leaveRoomResponses = await Promise.all(leaveRoomPromises);
 
-    // Delete User rows where id = connectionId
+    // Query to get the user's joinedAt value
     const userQuery = await dynamo.send(new QueryCommand({
       TableName: USER_TABLE,
       KeyConditionExpression: "id = :id",
       ExpressionAttributeValues: { ":id": connectionId }
     }));
 
-    if (userQuery.Items.length > 0) {
-      await Promise.all(userQuery.Items.map(user =>
-        dynamo.send(new DeleteCommand({
-          TableName: USER_TABLE,
-          Key: { id: user.id, joinedAt: user.joinedAt }
-        }))
-      ));
+    // Delete user if found
+    if (userQuery.Items && userQuery.Items.length > 0) {
+      const user = userQuery.Items[0];
+      await dynamo.send(new DeleteCommand({
+        TableName: USER_TABLE,
+        Key: { id: user.id, joinedAt: user.joinedAt }
+      }));
     }
 
     const leaveRoomResults = leaveRoomResponses.map(response => {

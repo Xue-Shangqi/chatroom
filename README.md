@@ -1,73 +1,99 @@
-# React + TypeScript + Vite
+# Your Average Chatroom
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time web application for connecting and chatting with others.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
 
-## React Compiler
+### Frontend
+- **React** 19 - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Fast build tool
+- **Tailwind CSS** - Styling
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Backend
+- **AWS Lambda** - Serverless compute
+- **AWS WebSocket API** - Real-time messaging
 
-## Expanding the ESLint configuration
+### Database
+- **AWS DynamoDB** - NoSQL database
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Project Structure
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── assets/              # Images and static files
+├── components/
+│   ├── controllers/     # Logic & state management
+│   │   └── useChatroomController.ts
+│   ├── models/          # Type definitions
+│   │   └── types.ts
+│   └── views/           # UI components
+│       ├── Chatroom.tsx
+│       ├── RoomSelection.tsx
+│       └── Welcome.tsx
+├── api/                 # AWS WebSocket integration
+│   └── awsWebsocket.ts
+└── lambdafunctions/     # AWS Lambda handlers
+    ├── broadcastMessage.mjs
+    ├── Connect.mjs
+    ├── Disconnect.mjs
+    ├── enterRoom.mjs
+    ├── leaveRoom.mjs
+    ├── queryRoomMembers.mjs
+    └── sendMessage.mjs
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Database Schema
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+> I was not able to supply the schemas file directly because AWS DynamoDB does not natively support it. However, this is basically the database looks like. 
+
+AWS DynamoDB tables: 
+
+### Message
+| Attribute | Type | Role |
+|-----------|------|------|
+| `chatroomId` | String | Partition Key |
+| `timestamp` | String | Sort Key |
+
+### Room
+| Attribute | Type | Role |
+|-----------|------|------|
+| `id` | String | Partition Key |
+| `owner` | String | Sort Key |
+
+### RoomMember
+| Attribute | Type | Role |
+|-----------|------|------|
+| `chatroomId` | String | Partition Key |
+| `userId` | String | Sort Key |
+
+### User
+| Attribute | Type | Role |
+|-----------|------|------|
+| `id` | String | Partition Key |
+| `joinedAt` | String | Sort Key |
+
+---
+
+## Architecture
+
+![MVC Design Pattern](./MVC%20Design%20Pattern.png)
+
+This application follows the MVC (Model-View-Controller) design pattern:
+- **Models**: Type definitions and data structures
+- **Views**: React components for UI rendering
+- **Controllers**: Business logic and state management
+
+---
+
+## Live Demo
+
+Visit: [https://xue-shangqi.github.io/chatroom/](https://xue-shangqi.github.io/chatroom/)
+
+---

@@ -4,7 +4,7 @@ import {
   QueryCommand,
   DeleteCommand
 } from "@aws-sdk/lib-dynamodb";
-import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
 
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
@@ -20,8 +20,9 @@ export const handler = async (event) => {
   const domain = event.requestContext.domainName;
   const stage = event.requestContext.stage;
 
-  const api = new ApiGatewayManagementApi({
-    endpoint: `${domain}/${stage}`
+  // WebSocket client
+  const wsClient = new ApiGatewayManagementApiClient({
+    endpoint: `https://${domain}/${stage}`
   });
 
   // 1️ Get the Room row to know the owner
@@ -54,16 +55,14 @@ export const handler = async (event) => {
       })
     );
 
+    console.log(membersQuery.Items)
+
     // Notify all members via WebSocket
     for (const member of membersQuery.Items) {
-      try {
-        await api.postToConnection({
-          ConnectionId: member.userId,
-          Data: JSON.stringify({ type: "ROOM_CLOSED", chatroomId, reason: "owner-left" })
-        });
-      } catch (err) {
-        // Ignore stale connections
-      }
+      await wsClient.send(new PostToConnectionCommand({
+        ConnectionId: member.userId,
+        Data: JSON.stringify({ type: "ROOM_CLOSED", chatroomId, reason: "owner-left" })
+      }));
     }
 
     // Delete all RoomMember rows
@@ -116,6 +115,22 @@ export const handler = async (event) => {
       Key: { chatroomId, userId: connectionId }
     })
   );
+
+  // Notify the rest of client 
+  const membersQuery = await dynamo.send(
+    new QueryCommand({
+      TableName: ROOMMEMBER_TABLE,
+      KeyConditionExpression: "chatroomId = :chatroomId",
+      ExpressionAttributeValues: { ":chatroomId": chatroomId }
+    })
+  );
+  
+  for (const member of membersQuery.Items) {
+    await wsClient.send(new PostToConnectionCommand({
+      ConnectionId: member.userId,
+      Data: JSON.stringify({ type: "MEMBER_LEFT", chatroomId })
+    }));
+  }
 
   return { statusCode: 200, body: JSON.stringify({ message: "Member left" }) };
 };

@@ -1,16 +1,17 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const ROOMMEMBER_TABLE = "RoomMember";
 
 export const handler = async (event) => {
   const body = typeof event === "string" ? JSON.parse(event) : event;
-  const { chatroomId, username, content, timestamp, domain, stage, exclude } = body;
+  const { chatroomId, userId, username, content, timestamp, domain, stage, exclude } = body;
 
-  const api = new ApiGatewayManagementApi({
-    endpoint: `${domain}/${stage}`
+  // WebSocket client
+  const wsClient = new ApiGatewayManagementApiClient({
+    endpoint: `https://${domain}/${stage}`
   });
 
   // Query all users in the room
@@ -29,15 +30,16 @@ export const handler = async (event) => {
     const connectionId = item.userId;
     if(connectionId === exclude) continue;
     try {
-      await api.postToConnection({
+      await wsClient.send(new PostToConnectionCommand({
         ConnectionId: connectionId,
         Data: JSON.stringify({
           chatroomId,
+          userId,
           username,
           content,
           timestamp
         })
-      });
+      }));
     } catch (err) {
       console.warn(`Stale connection: ${connectionId}`);
     }

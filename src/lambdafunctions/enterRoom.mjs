@@ -107,12 +107,21 @@ export const handler = async (event) => {
         Data: JSON.stringify({ requestId, chatroomId, message: `Joined room '${chatroomId}'`, messages: messages.Items || [], roomDetails: roomDetails.Items[0]})
       }));
 
+      // Query username from User table
+      const userQuery = await dynamo.send(new QueryCommand({
+        TableName: "User",
+        KeyConditionExpression: "id = :userId",
+        ExpressionAttributeValues: {
+          ":userId": connectionId
+        }
+      }));
+
       // Send response to other client to update
       for (const user of connectedUsers.Items) {
         if (user.userId !== connectionId) {
           await wsClient.send(new PostToConnectionCommand({
             ConnectionId: user.userId,
-            Data: JSON.stringify({ requestId, chatroomId, message: `User ${connectionId} joined the room` })
+            Data: JSON.stringify({ requestId, chatroomId, username: userQuery.Items[0]})
           }));
         }
       }

@@ -64,6 +64,7 @@ export const handler = async (event) => {
       FunctionName: "broadcastMessage",
       Payload: JSON.stringify({
         chatroomId,
+        userId: connectionId,
         username,
         content,
         timestamp,
