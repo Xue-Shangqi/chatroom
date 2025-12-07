@@ -116,6 +116,11 @@ export const useChatroomController = () => {
     setIsRoomActionPending(true);
     try {
       const result = await joinRoom(chatroomId);
+      if (result.message === 'Room not found') {
+        alert('Room not found. Please check the Room ID and try again.');
+        setIsRoomActionPending(false);
+        return;
+      }
       const joinedRoom: Room = {
         id: result.chatroomId,
         name: result.roomDetails?.roomName || 'Unknown Room',

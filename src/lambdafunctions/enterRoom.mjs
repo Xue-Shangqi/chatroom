@@ -71,6 +71,23 @@ export const handler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ message: "Missing 'chatroomId' for join" }) };
       }
 
+      // Check if room exists
+      const roomExists = await dynamo.send(new QueryCommand({
+        TableName: ROOM_TABLE,
+        KeyConditionExpression: "id = :chatroomId",
+        ExpressionAttributeValues: {
+          ":chatroomId": chatroomId
+        }
+      }));
+
+      if (!roomExists.Items || roomExists.Items.length === 0) {
+        await wsClient.send(new PostToConnectionCommand({
+          ConnectionId: connectionId,
+          Data: JSON.stringify({ requestId, chatroomId, message: "Room not found" })
+        }));
+        return { statusCode: 404, body: JSON.stringify({ message: "Room not found" }) };
+      }
+
       // Query for all connected users 
       const connectedUsers = await dynamo.send(new QueryCommand({
         TableName: ROOMMEMBER_TABLE,

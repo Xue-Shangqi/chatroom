@@ -68,7 +68,7 @@ export function createRoom(roomName: string, chatroomId?: string): Promise<{ cha
 }
 
 // Join room
-export function joinRoom(chatroomId: string): Promise<{ chatroomId: string; messages: any[]; roomDetails: any }> {
+export function joinRoom(chatroomId: string): Promise<{ chatroomId: string; message:string, messages: any[]; roomDetails: any }> {
   return new Promise((resolve, reject) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return reject("WebSocket not connected");
 
@@ -82,6 +82,7 @@ export function joinRoom(chatroomId: string): Promise<{ chatroomId: string; mess
       clearTimeout(timeout);
       resolve({
         chatroomId: data.chatroomId,
+        message: data.message || '',
         messages: data.messages || [],
         roomDetails: data.roomDetails || null
       });
