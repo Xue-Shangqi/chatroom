@@ -2,35 +2,35 @@ import React, { useState } from 'react';
 
 interface RoomSelectionProps {
   currentUsername: string;
-  onJoinRoom: (roomId: string, username: string) => void;
-  onCreateRoom: (roomName: string, username: string) => void;
+  onJoinRoom: (roomId: string) => void;
+  onCreateRoom: (roomName: string ) => void;
 }
 
 function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelectionProps) {
   const [activeTab, setActiveTab] = useState<'join' | 'create'>('join');
-  const [selectedRoomId, setSelectedRoomId] = useState('');
+  const [chatroomId, setChatroomId] = useState('');
   const [newRoomName, setNewRoomName] = useState('');
 
   // Username should be the same as the one entered in Welcome component
 
   const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedRoomId) {
-      onJoinRoom(selectedRoomId, currentUsername);
+    if (chatroomId) {
+      onJoinRoom(chatroomId);
     }
   };
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
     if (newRoomName) {
-      onCreateRoom(newRoomName, currentUsername);
+      onCreateRoom(newRoomName);
     }
   };
 
   return (
     <div className="room-selection-container">
       <div className="room-selection-content">
-        <h1 className="room-selection-title">Select a Chatroom</h1>
+        <h1 className="room-selection-title">Join or Create Chatroom</h1>
         
         {/* Tab Navigation */}
         <div className="tab-navigation">
@@ -59,8 +59,8 @@ function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelect
                 <input
                   id="chatid"
                   type="text"
-                  value={selectedRoomId}
-                  onChange={(e) => setSelectedRoomId(e.target.value)}
+                  value={chatroomId}
+                  onChange={(e) => setChatroomId(e.target.value)}
                   placeholder="Enter the room ID"
                   required
                   className="form-input"
@@ -70,7 +70,7 @@ function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelect
               <button
                 type="submit"
                 className="submit-button"
-                disabled={!currentUsername || !selectedRoomId}
+                disabled={!currentUsername || !chatroomId}
               >
                 Join Room
               </button>

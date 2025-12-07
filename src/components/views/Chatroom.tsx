@@ -1,21 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Room } from '../models/types';
+import type { Room, Message } from '../models/types';
 
 interface ChatroomProps {
   room: Room;
+  messages: Message[];
+  roomMembers: string[];
   currentUsername: string;
   onSendMessage: (content: string) => void;
-  onLeaveRoom: () => void;
+  onLeaveRoom: (chatroomId: string) => void;
 }
 
-function Chatroom({ room, currentUsername, onSendMessage, onLeaveRoom }: ChatroomProps) {
+function Chatroom({ room, messages, roomMembers, currentUsername, onSendMessage, onLeaveRoom }: ChatroomProps) {
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [room.messages]);
+  }, [messages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,10 +41,10 @@ function Chatroom({ room, currentUsername, onSendMessage, onLeaveRoom }: Chatroo
         <div className="chatroom-header-info">
           <h1 className="chatroom-title">{room.name}</h1>
           <span className="chatroom-members-count">
-            {room.members.length} member{room.members.length !== 1 ? 's' : ''} online
+            {roomMembers.length} member{roomMembers.length !== 1 ? 's' : ''} online
           </span>
         </div>
-        <button onClick={onLeaveRoom} className="leave-button">
+        <button onClick={() => onLeaveRoom(room.id)} className="leave-button">
           Leave Room
         </button>
       </div>
@@ -53,28 +55,28 @@ function Chatroom({ room, currentUsername, onSendMessage, onLeaveRoom }: Chatroo
         <aside className="chatroom-sidebar">
           <h2 className="sidebar-title">Members</h2>
           <ul className="members-list">
-            {room.members.map((member) => (
-              <li key={member.id} className="member-item">
+            {roomMembers.map((member) => (
+              <li key={member} className="member-item">
                 <span className="member-status-dot"></span>
                 <span className="member-name">
-                  {member.username}
-                  {member.username === currentUsername && ' (You)'}
+                  {member}
+                  {member === currentUsername && ' (You)'}
                 </span>
               </li>
-            ))}
+            )) || <li>No members</li>}
           </ul>
         </aside>
 
         {/* Messages Area */}
         <div className="chatroom-content">
           <div className="messages-container">
-            {room.messages.length === 0 ? (
+            {messages.length === 0 ? (
               <div className="no-messages">
                 <p>No messages yet. Start the conversation!</p>
               </div>
             ) : (
               <>
-                {room.messages.map((message) => (
+                {messages.map((message) => (
                   <div
                     key={message.id}
                     className={`message ${

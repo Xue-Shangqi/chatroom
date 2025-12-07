@@ -1,107 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Room, User, Message, ViewState } from '../models/types';
+import { connectWebSocket, queryRoomMembers, createRoom, joinRoom, leaveRoom } from '../../api/awsLambda';
 
 export const useChatroomController = () => {
   const [currentView, setCurrentView] = useState<ViewState>('welcome');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [roomMembers, setRoomMembers] = useState<string[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // Generate unique ID
-  const generateId = () => {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   // Navigate from welcome to room selection
   const handleContinueFromWelcome = (username: string) => {
-    const user: User = {
-      id: generateId(),
+    wsRef.current = connectWebSocket("wss://yoyqjkjjg2.execute-api.us-east-1.amazonaws.com/production/", username);
+    const newUser: User = {
       username,
       joinedAt: new Date()
     };
-    setCurrentUser(user);
+    setCurrentUser(newUser);
     setCurrentView('room-selection');
   };
 
   // Create a new room
-  const handleCreateRoom = (roomName: string, username: string) => {
-    const user: User = {
-      id: generateId(),
-      username,
-      joinedAt: new Date()
-    };
-
+  const handleCreateRoom = async (roomName: string) => {
+    const result = await createRoom(roomName);
     const newRoom: Room = {
-      id: generateId(),
+      id: result.chatroomId,
       name: roomName,
-      createdBy: username,
-      createdAt: new Date(),
-      members: [user],
-      messages: []
+      owner: currentUser ? currentUser.username : 'unknown',
+      createdAt: new Date()
     };
-
-    setRooms([...rooms, newRoom]);
-    setCurrentUser(user);
+    setRooms(prevRooms => [...prevRooms, newRoom]);
     setCurrentRoom(newRoom);
+    setMessages(result.messages || []);
+    const members = await queryRoomMembers(newRoom.id).then(res => res.members);
+    setRoomMembers(members);
     setCurrentView('chatroom');
   };
 
   // Join an existing room
-  const handleJoinRoom = (roomId: string, username: string) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return;
-
-    const user: User = {
-      id: generateId(),
-      username,
-      joinedAt: new Date()
-    };
-
-    // Add user to room members
-    const updatedRoom: Room = {
-      ...room,
-      members: [...room.members, user]
-    };
-
-    setRooms(rooms.map(r => r.id === roomId ? updatedRoom : r));
-    setCurrentUser(user);
-    setCurrentRoom(updatedRoom);
-    setCurrentView('chatroom');
+  const handleJoinRoom = async (chatroomId: string) => {
+    const result = await joinRoom(chatroomId);
+    const joinedRoom = rooms.find(room => room.id === result.chatroomId);
+    if (joinedRoom) {
+      setCurrentRoom(joinedRoom);
+      setMessages(result.messages || []);
+      setRoomMembers(await queryRoomMembers(joinedRoom.id).then(res => res.members));
+      setCurrentView('chatroom');
+    }
   };
 
   // Send a message
   const handleSendMessage = (content: string) => {
-    if (!currentRoom || !currentUser) return;
 
-    const newMessage: Message = {
-      id: generateId(),
-      userId: currentUser.id,
-      username: currentUser.username,
-      content,
-      timestamp: new Date()
-    };
-
-    const updatedRoom: Room = {
-      ...currentRoom,
-      messages: [...currentRoom.messages, newMessage]
-    };
-
-    setRooms(rooms.map(r => r.id === currentRoom.id ? updatedRoom : r));
-    setCurrentRoom(updatedRoom);
   };
 
   // Leave current room
-  const handleLeaveRoom = () => {
-    if (!currentRoom || !currentUser) return;
-
-    // Remove user from room members
-    const updatedRoom: Room = {
-      ...currentRoom,
-      members: currentRoom.members.filter(m => m.id !== currentUser.id)
-    };
-
-    setRooms(rooms.map(r => r.id === currentRoom.id ? updatedRoom : r));
-    setCurrentRoom(null);
+  const handleLeaveRoom = async (chatroomId: string) => {
+    await leaveRoom(chatroomId);
     setCurrentView('room-selection');
   };
 
@@ -110,6 +76,8 @@ export const useChatroomController = () => {
     rooms,
     currentRoom,
     currentUser,
+    messages,
+    roomMembers,
     handleContinueFromWelcome,
     handleCreateRoom,
     handleJoinRoom,

@@ -1,6 +1,6 @@
 // User model
 export interface User {
-  id: string;
+  id?: string;
   username: string;
   joinedAt: Date;
 }
@@ -9,6 +9,7 @@ export interface User {
 export interface Message {
   id: string;
   userId: string;
+  chatroomId: string;
   username: string;
   content: string;
   timestamp: Date;
@@ -18,10 +19,13 @@ export interface Message {
 export interface Room {
   id: string;
   name: string;
-  createdBy: string;
+  owner: string;
   createdAt: Date;
-  members: User[];
-  messages: Message[];
+}
+
+export interface RoomMembers {
+  user_id: string;
+  room_id: string;
 }
 
 // Application state

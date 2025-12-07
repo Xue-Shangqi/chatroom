@@ -9,6 +9,8 @@ function App() {
     currentView,
     currentRoom,
     currentUser,
+    messages,
+    roomMembers,
     handleContinueFromWelcome,
     handleCreateRoom,
     handleJoinRoom,
@@ -33,6 +35,8 @@ function App() {
       {currentView === 'chatroom' && currentRoom && currentUser && (
         <Chatroom
           room={currentRoom}
+          messages={messages}
+          roomMembers={roomMembers}
           currentUsername={currentUser.username}
           onSendMessage={handleSendMessage}
           onLeaveRoom={handleLeaveRoom}
