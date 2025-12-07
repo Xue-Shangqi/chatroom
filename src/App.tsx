@@ -11,6 +11,7 @@ function App() {
     currentUser,
     messages,
     roomMembers,
+    isRoomActionPending,
     handleContinueFromWelcome,
     handleCreateRoom,
     handleJoinRoom,
@@ -29,6 +30,7 @@ function App() {
           currentUsername={currentUser.username}
           onJoinRoom={handleJoinRoom}
           onCreateRoom={handleCreateRoom}
+          isRoomActionPending={isRoomActionPending}
         />
       )}
 

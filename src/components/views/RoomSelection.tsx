@@ -4,9 +4,10 @@ interface RoomSelectionProps {
   currentUsername: string;
   onJoinRoom: (roomId: string) => void;
   onCreateRoom: (roomName: string ) => void;
+  isRoomActionPending: boolean;
 }
 
-function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelectionProps) {
+function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom, isRoomActionPending }: RoomSelectionProps) {
   const [activeTab, setActiveTab] = useState<'join' | 'create'>('join');
   const [chatroomId, setChatroomId] = useState('');
   const [newRoomName, setNewRoomName] = useState('');
@@ -15,14 +16,14 @@ function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelect
 
   const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
-    if (chatroomId) {
+    if (chatroomId && !isRoomActionPending) {
       onJoinRoom(chatroomId);
     }
   };
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newRoomName) {
+    if (newRoomName && !isRoomActionPending) {
       onCreateRoom(newRoomName);
     }
   };
@@ -70,9 +71,9 @@ function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelect
               <button
                 type="submit"
                 className="submit-button"
-                disabled={!currentUsername || !chatroomId}
+                disabled={!currentUsername || !chatroomId || isRoomActionPending}
               >
-                Join Room
+                {isRoomActionPending ? 'Joining...' : 'Join Room'}
               </button>
             </form>
           </div>
@@ -100,9 +101,9 @@ function RoomSelection({ currentUsername, onJoinRoom, onCreateRoom }: RoomSelect
               <button
                 type="submit"
                 className="submit-button"
-                disabled={!newRoomName}
+                disabled={!newRoomName || isRoomActionPending}
               >
-                Create & Join Room
+                {isRoomActionPending ? 'Creating...' : 'Create & Join Room'}
               </button>
             </form>
           </div>

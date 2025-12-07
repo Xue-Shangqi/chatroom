@@ -7,12 +7,11 @@ export interface User {
 
 // Message model
 export interface Message {
-  id: string;
-  userId: string;
   chatroomId: string;
+  timestamp: Date;
+  userId: string;
   username: string;
   content: string;
-  timestamp: Date;
 }
 
 // Room model

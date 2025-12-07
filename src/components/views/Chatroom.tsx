@@ -6,12 +6,14 @@ interface ChatroomProps {
   messages: Message[];
   roomMembers: string[];
   currentUsername: string;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, chatroomId: string, username: string) => void;
   onLeaveRoom: (chatroomId: string) => void;
 }
 
 function Chatroom({ room, messages, roomMembers, currentUsername, onSendMessage, onLeaveRoom }: ChatroomProps) {
   const [messageInput, setMessageInput] = useState('');
+  const [showRoomId, setShowRoomId] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -19,11 +21,19 @@ function Chatroom({ room, messages, roomMembers, currentUsername, onSendMessage,
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleCopyRoomId = () => {
+    navigator.clipboard.writeText(room.id);
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2000);
+  };
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (messageInput.trim()) {
-      onSendMessage(messageInput.trim());
+    if (messageInput.trim() && messageInput.trim().length < 1000) {
+      onSendMessage(messageInput.trim(), room.id, currentUsername);
       setMessageInput('');
+    } else {
+      alert('Message failed to send. Ensure it is not empty and under 1000 characters.');
     }
   };
 
@@ -65,6 +75,27 @@ function Chatroom({ room, messages, roomMembers, currentUsername, onSendMessage,
               </li>
             )) || <li>No members</li>}
           </ul>
+          <div className="room-id-container">
+            <button
+              onClick={() => setShowRoomId(!showRoomId)}
+              className="room-id-toggle"
+              title="Toggle room ID visibility"
+            >
+              Room ID {showRoomId ? '▼' : '▶'}
+            </button>
+            {showRoomId && (
+              <div className="room-id-display">
+                <span className="room-id-text">{room.id}</span>
+                <button
+                  onClick={handleCopyRoomId}
+                  className="copy-button"
+                  title="Copy room ID to clipboard"
+                >
+                  {copyFeedback ? '✓ Copied!' : 'Copy'}
+                </button>
+              </div>
+            )}
+          </div>
         </aside>
 
         {/* Messages Area */}
@@ -78,7 +109,7 @@ function Chatroom({ room, messages, roomMembers, currentUsername, onSendMessage,
               <>
                 {messages.map((message) => (
                   <div
-                    key={message.id}
+                    key={message.timestamp.toString() + message.username}
                     className={`message ${
                       message.username === currentUsername ? 'message-own' : 'message-other'
                     }`}
