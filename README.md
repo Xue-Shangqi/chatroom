@@ -82,7 +82,8 @@ AWS DynamoDB tables:
 ---
 
 ## Architecture
->The design doc before might be outdated compares to what I actually have.
+>The design doc below might be outdated compares to what I actually have.
+
 ![MVC Design Pattern](./MVC%20Design%20Pattern.png)
 
 This application follows the MVC (Model-View-Controller) design pattern:
